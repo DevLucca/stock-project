@@ -14,8 +14,8 @@ class ticker(  ):
         self.tickers = tickers
         return self
 
-    def search( self, tickerList ):
-        for ticker in tickerList:
+    def search( self, category ):
+        for ticker in self.tickers[category]:
             
             ticker = yf.Ticker(ticker['Ticker'])
             ticker = ticker.history(period="max")

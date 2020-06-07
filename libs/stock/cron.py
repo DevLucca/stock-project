@@ -10,23 +10,24 @@ class cron(  ):
         self.GSclient = GSclient
         self.sheet    = self.GSclient.open( os.getenv( 'SHEETNAME' ) )
         self.cronLog  = json.load( open( os.path.join( os.getcwd(  ), 'runlog.json' ), 'r') )
-        categories    = self._getCron(  )
+        categories    = self.__getCron(  )
 
-        self._adjustRunLog( categories )
+        self.__adjustRunLog( categories )
 
-        self.tickers = ticker(  ).get( self.sheet ).group( list( self.cronLog.keys(  ) ) ).tickers
+        self.ticker = ticker(  )
+        self.ticker.get( self.sheet ).group( list( self.cronLog.keys(  ) ) )
 
         for category in categories:
-            self._cronControll( category )
+            self.__cronControll( category )
 
-    def _getCron( self ):
+    def __getCron( self ):
         """
         Retorna os niveis de categoria na planilha.
             * Retorna json
         """
         return self.sheet.worksheet( os.getenv( 'CRON_PAGE' ) ).get_all_records(  )
 
-    def _adjustRunLog( self, categories ):
+    def __adjustRunLog( self, categories ):
         """
         Ajusta o arquivo runlog.json, lendo as configuracoes de log na planilha.
         """
@@ -42,10 +43,10 @@ class cron(  ):
             if int( logCategory ) not in [category['Category'] for category in categories]:
                 print( f"Cron not in spreadsheet, removing from category. CategoryID: {logCategory}" )
                 del self.cronLog[logCategory]
-        self._saveRunLog(  )
+        self.__saveRunLog(  )
         return
         
-    def _cronControll( self, category ):
+    def __cronControll( self, category ):
         """
         Controla a execucao dos robos.
         """
@@ -54,13 +55,13 @@ class cron(  ):
             print( f"Job not running. Starting CategoryID: {category['Category']}" )
             if self.cronLog[str( category['Category'] )]['lastRun'] is None:
                 print( f"First job run. Stating CategoryID: {category['Category']}" )
-                thr = threading.Thread( target=self._run, kwargs=category )
+                thr = threading.Thread( target=self.__run, kwargs=category )
                 thr.start(  )
             else:
                 last_run = datetime.strptime( self.cronLog[str( category['Category'] )]['lastRun'], '%Y-%m-%d %H:%M:%S.%f' )
                 now_delta = datetime.now(  ) - timedelta( minutes=float( str( category['Time'] ).replace( ',','.' ) ) )
                 if last_run <= now_delta:
-                    thr = threading.Thread( target=self._run, kwargs=category )
+                    thr = threading.Thread( target=self.__run, kwargs=category )
                     thr.start(  )
                     print( 'Started Sucessfuly...' )
                 else:
@@ -69,22 +70,22 @@ class cron(  ):
             print( f"Job already running... CategoryID: {category['Category']}" )
         return
 
-    def _run( self, Category, Description, Time ):
+    def __run( self, Category, Description, Time ):
         """
         Executa os robos.
         """
         self.cronLog[str( Category )]['isRunning'] = True
 
         ###########
-        ticker(  ).search( self.tickers[str( Category )] )
+        self.ticker.search( str( Category ) )
         ###########
 
         self.cronLog[str( Category )]['lastRun'] = str( datetime.now(  ) )
         self.cronLog[str( Category )]['isRunning'] = False
-        self._saveRunLog(  )
+        self.__saveRunLog(  )
         return
 
-    def _saveRunLog( self ):
+    def __saveRunLog( self ):
         """
         Salva o arquivo runlog.json
         """
