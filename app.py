@@ -8,6 +8,7 @@ import time
 import json
 import dotenv
 import gspread
+import datetime
 import libs.stock as stock
 from ast import literal_eval
 from distutils.util import strtobool
@@ -26,9 +27,15 @@ GSclient = gspread.authorize( credential )
 ########### MAIN ###########
 def main(  ):
     while True:
-        stock.stocker( GSclient )
-        time.sleep(30)
-        print('============================================')
+        if 10 <= datetime.datetime.now(  ).hour < 18:
+            stock.stocker( GSclient )
+            time.sleep(60)
+            print('============================================')
+        else:
+            stopTime = 3600 * 10
+            print( f'Market closed! Search Stopped for {stopTime} seconds / {int( stopTime/3600 )} hours.' )
+            time.sleep( stopTime )
+            print('============================================')
 
 if __name__ == '__main__':
     try:

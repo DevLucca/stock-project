@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import time
 import threading
@@ -13,7 +14,6 @@ class cron(  ):
         categories    = self.__getCron(  )
 
         self.__adjustRunLog( categories )
-
         self.ticker = ticker(  )
         self.ticker.get( self.sheet ).group( list( self.cronLog.keys(  ) ) )
 
@@ -77,7 +77,26 @@ class cron(  ):
         self.cronLog[str( Category )]['isRunning'] = True
 
         ###########
-        self.ticker.search( str( Category ) )
+        data = self.ticker.search( str( Category ) )
+        current_data = self.sheet.worksheet( os.getenv( 'CURRENT_PAGE' ) ).get_all_records(  )
+        assert [i for i in data if i not in current_data] == []
+        print(test)
+        # for rdata in data:
+        #     for cdata in enum_current_data:
+        #         index = None
+        #         if rdata['Ticker'] == cdata[1]['Ticker']:
+        #             print(cdata)
+
+            # if rdata['Ticker'] in [crdata[1] for crdata in cdata]:
+            #     print(rdata['Ticker'])
+            #     print(current_data.indexOf(  ))
+
+
+        # self.sheet.values_update(
+        #     'Current!A2', 
+        #     params={'valueInputOption': 'RAW'}, 
+        #     body={'values': current_data}
+        # )
         ###########
 
         self.cronLog[str( Category )]['lastRun'] = str( datetime.now(  ) )
